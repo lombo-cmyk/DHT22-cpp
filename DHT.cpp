@@ -16,7 +16,7 @@
 #include <sys/types.h>
 #include <esp_log.h>
 
-#include "DHT.h"
+#include "include/DHT.h"
 
 static char TAG[] = "DHT";
 
