@@ -9,12 +9,10 @@
 	PLEASE KEEP THIS CODE IN LESS THAN 0XFF LINES. EACH LINE MAY CONTAIN ONE BUG !!!
 ---------------------------------------------------------------------------------*/
 
-
 #include <driver/gpio.h>
-#include <esp_err.h>
-#include <stdint.h>
-#include <sys/types.h>
+#include <cstdint>
 #include <esp_log.h>
+#include <array>
 
 #include "include/DHT.h"
 
@@ -26,56 +24,32 @@ static char TAG[] = "DHT";
 ;
 ;------------------------------------------------------------------------*/
 
-DHT::DHT()
+DHT::DHT(gpio_num_t gpioPin)
 {
-
-	DHTgpio = (gpio_num_t) 4;
-	humidity = 0.;
-	temperature = 0.;
+    DHTgpio_ = gpioPin;
+	humidity_ = 0.;
+	temperature_ = 0.;
 
 }
-
-/*
-DHT::~DHT( void )
-{
-}
-*/
-
-// ----------------------------------------------------------------------
-
-void DHT::setDHTgpio( gpio_num_t gpio )
-{
-	DHTgpio = gpio;
-}
-
-
-// == get temp & hum =============================================
-
-float DHT::getHumidity() { return humidity; }
-float DHT::getTemperature() { return temperature; }
 
 // == error handler ===============================================
 
-void DHT::errorHandler(int response)
+void DHT::ErrorHandler(int response)
 {
 	switch(response) {
-
 		case DHT_TIMEOUT_ERROR :
-			//ESP_LOGI( TAG, "Sensor Timeout\n" );
-			printf( "Sensor Timeout\n" );
+			ESP_LOGE( TAG, "Sensor Timeout\n" );
 			break;
 
 		case DHT_CHECKSUM_ERROR:
-			//ESP_LOGI( TAG, "CheckSum error\n" );
-			printf( "CheckSum error\n" );
+			ESP_LOGE( TAG, "CheckSum error\n" );
 			break;
 
 		case DHT_OK:
 			break;
 
 		default :
-			//ESP_LOGI( TAG, "Unknown error\n" );
-			printf( "Unknown error\n" );
+			ESP_LOGE( TAG, "Unknown error\n" );
 	}
 }
 
@@ -88,11 +62,11 @@ void DHT::errorHandler(int response)
 ;
 ;--------------------------------------------------------------------------------*/
 
-int DHT::getSignalLevel( int usTimeOut, bool state )
+int DHT::GetSignalLevel( int usTimeOut, bool state )
 {
 
 	int uSec = 0;
-	while( gpio_get_level(DHTgpio)==state ) {
+	while( gpio_get_level(DHTgpio_)==state ) {
 
 		if( uSec > usTimeOut )
 			return -1;
@@ -136,42 +110,38 @@ int DHT::getSignalLevel( int usTimeOut, bool state )
 		1: 70 us
 ;----------------------------------------------------------------------------*/
 
-#define MAXdhtData 5	// to complete 40 = 5*8 Bits
 
-int DHT::readDHT()
+int DHT::ReadDHT()
 {
-int uSec = 0;
+    int uSec;
+    std::array<std::uint8_t, MAXdhtData> dhtData{};
+    std::uint8_t byteInx = 0;
+    std::uint8_t bitInx = 7;
 
-uint8_t dhtData[MAXdhtData];
-uint8_t byteInx = 0;
-uint8_t bitInx = 7;
-
-	for (int k = 0; k<MAXdhtData; k++)
-		dhtData[k] = 0;
 
 	// == Send start signal to DHT sensor ===========
 
-	gpio_set_direction( DHTgpio, GPIO_MODE_OUTPUT );
+	gpio_set_direction(DHTgpio_, GPIO_MODE_OUTPUT );
 
 	// pull down for 3 ms for a smooth and nice wake up
-	gpio_set_level( DHTgpio, 0 );
+	gpio_set_level(DHTgpio_, 0 );
 	ets_delay_us( 3000 );
 
 	// pull up for 25 us for a gentile asking for data
-	gpio_set_level( DHTgpio, 1 );
+	gpio_set_level(DHTgpio_, 1 );
 	ets_delay_us( 25 );
 
-	gpio_set_direction( DHTgpio, GPIO_MODE_INPUT );		// change to input mode
+	gpio_set_direction(DHTgpio_, GPIO_MODE_INPUT );		// change to input mode
 
 	// == DHT will keep the line low for 80 us and then high for 80us ====
 
-	uSec = getSignalLevel( 85, 0 );
+	uSec = GetSignalLevel(85, false);
 //	ESP_LOGI( TAG, "Response = %d", uSec );
 	if( uSec<0 ) return DHT_TIMEOUT_ERROR;
 
 	// -- 80us up ------------------------
 
-	uSec = getSignalLevel( 85, 1 );
+	uSec = GetSignalLevel(85, true);
 //	ESP_LOGI( TAG, "Response = %d", uSec );
 	if( uSec<0 ) return DHT_TIMEOUT_ERROR;
 
@@ -181,12 +151,12 @@ uint8_t bitInx = 7;
 
 		// -- starts new data transmission with >50us low signal
 
-		uSec = getSignalLevel( 56, 0 );
+		uSec = GetSignalLevel(56, false);
 		if( uSec<0 ) return DHT_TIMEOUT_ERROR;
 
 		// -- check to see if after >70us rx data is a 0 or a 1
 
-		uSec = getSignalLevel( 75, 1 );
+		uSec = GetSignalLevel(75, true);
 		if( uSec<0 ) return DHT_TIMEOUT_ERROR;
 
 		// add the current read to the output data
@@ -194,7 +164,7 @@ uint8_t bitInx = 7;
 		// only look for "1" (>28us us)
 
 		if (uSec > 40) {
-			dhtData[ byteInx ] |= (1 << bitInx);
+			dhtData[ byteInx ] |= (1u << bitInx);
 			}
 
 		// index to next byte
@@ -204,30 +174,33 @@ uint8_t bitInx = 7;
 	}
 
 	// == get humidity from Data[0] and Data[1] ==========================
-
-	humidity = dhtData[0];
+    std::uint16_t humidity = dhtData[0];
 	humidity *= 0x100;					// >> 8
 	humidity += dhtData[1];
-	humidity /= 10;						// get the decimal
+	humidity_ = static_cast<float>(humidity) / 10;						// get the decimal
 
 	// == get temp from Data[2] and Data[3]
 
-	temperature = dhtData[2] & 0x7F;
+    std::uint16_t temperature = dhtData[2] & 0x7Fu;
 	temperature *= 0x100;				// >> 8
 	temperature += dhtData[3];
-	temperature /= 10;
+	temperature_ = static_cast<float>(temperature) / 10;
 
-	if( dhtData[2] & 0x80 ) 			// negative temp, brrr it's freezing
-		temperature *= -1;
+	if( dhtData[2] & 0x80u ) 			// negative temp, brrr it's freezing
+		temperature_ *= -1;
 
 
 	// == verify if checksum is ok ===========================================
 	// Checksum is the sum of Data 8 bits masked out 0xFF
-
-	if (dhtData[4] == ((dhtData[0] + dhtData[1] + dhtData[2] + dhtData[3]) & 0xFF))
-		return DHT_OK;
-
-	else
-		return DHT_CHECKSUM_ERROR;
+    return VerifyCrc(dhtData);
 }
 
+int DHT::VerifyCrc(std::array<std::uint8_t, 5> verifyData) {
+    std::uint16_t data = verifyData[0] + verifyData[1] + verifyData[2] + verifyData[3];
+    if (verifyData[4] == (data & 0xFFu)){
+        return DHT_OK;
+    }
+    else{
+        return DHT_CHECKSUM_ERROR;
+    }
+}

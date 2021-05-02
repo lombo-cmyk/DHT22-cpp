@@ -10,26 +10,32 @@
 #define DHT_OK 0
 #define DHT_CHECKSUM_ERROR -1
 #define DHT_TIMEOUT_ERROR -2
+#define MAXdhtData 5	// to complete 40 = 5*8 Bits
 
 class DHT {
 
 	public:
 
-		DHT();
+		explicit DHT(gpio_num_t gpioPin);
 
-		void 	setDHTgpio( gpio_num_t gpio);
-		void 	errorHandler(int response);
-		int 	readDHT();
-		float 	getHumidity();
-		float 	getTemperature();
+		static void ErrorHandler(int response);
+		int ReadDHT();
+
+		auto GetHumidity() const -> const float &{
+            return humidity_;
+        };
+		auto GetTemperature() const -> const float &{
+            return temperature_;
+        };
 
 	private:
 
-		gpio_num_t DHTgpio;
-		float 	humidity = 0.;
-		float 	temperature = 0.;
+		gpio_num_t DHTgpio_;
+		float humidity_ = 0.;
+		float temperature_ = 0.;
 
-		int 	getSignalLevel( int usTimeOut, bool state );
+		int GetSignalLevel( int usTimeOut, bool state );
+        static int VerifyCrc(std::array<std::uint8_t, MAXdhtData> verifyData);
 
 };
 

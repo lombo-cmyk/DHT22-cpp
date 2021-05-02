@@ -33,12 +33,12 @@ See main.cpp
 		while(1) {
 
 			printf("=== Reading DHT ===\n" );
-			int ret = dht.readDHT();
+			int ret = dht.ReadDHT();
 
-			dht.errorHandler(ret);
+			dht.ErrorHandler(ret);
 
-			printf( "Hum %.1f\n", dht.getHumidity() );
-			printf( "Tmp %.1f\n", dht.getTemperature() );
+			printf( "Hum %.1f\n", dht.GetHumidity() );
+			printf( "Tmp %.1f\n", dht.GetTemperature() );
 
 			// -- wait at least 2 sec before reading again ------------
 			// The interval of whole process must be beyond 2 seconds !!
