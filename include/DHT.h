@@ -1,9 +1,3 @@
-/* DHT library
-
-
-*/
-
-
 #ifndef DHT_H
 #define DHT_H
 
@@ -35,7 +29,8 @@ class DHT {
 		float temperature_ = 0.;
 
 		int GetSignalLevel( int usTimeOut, bool state );
-        static int VerifyCrc(std::array<std::uint8_t, MAXdhtData> verifyData);
+        int VerifyCrc(std::array<std::uint8_t, MAXdhtData> verifyData);
+        void UpdateModbusRegisters() const;
 
 };
 

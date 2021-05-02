@@ -1,3 +1,6 @@
-set(COMPONENT_ADD_INCLUDEDIRS include)
-set(COMPONENT_SRCS "DHT.cpp")
-register_component()
+set(CMAKE_CXX_STANDARD 17)
+
+idf_component_register(SRCS "DHT.cpp"
+        INCLUDE_DIRS "include"
+        REQUIRES EspEthW5500Modbus
+        PRIV_REQUIRES freemodbus)

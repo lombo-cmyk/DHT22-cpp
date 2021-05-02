@@ -15,6 +15,8 @@
 #include <array>
 
 #include "include/DHT.h"
+#include "Modbus.h"
+#include "ModbusDefinitions.h"
 
 static char TAG[] = "DHT";
 
@@ -198,9 +200,20 @@ int DHT::ReadDHT()
 int DHT::VerifyCrc(std::array<std::uint8_t, 5> verifyData) {
     std::uint16_t data = verifyData[0] + verifyData[1] + verifyData[2] + verifyData[3];
     if (verifyData[4] == (data & 0xFFu)){
+        UpdateModbusRegisters();
         return DHT_OK;
     }
     else{
         return DHT_CHECKSUM_ERROR;
     }
+}
+void DHT::UpdateModbusRegisters() const {
+    auto& modbusManager = Modbus::getInstance();
+    vPortEnterCritical(&modbusMutex);
+    holdingRegParams_t regHolding = modbusManager.GetHoldingRegs();
+    //todo: properly link indexHumidity(5) here from main project or port
+    //todo: all updateModbus functions outside of actual sensor handlers
+    regHolding[5] = humidity_;
+    modbusManager.UpdateHoldingRegs(regHolding);
+    vPortExitCritical(&modbusMutex);
 }

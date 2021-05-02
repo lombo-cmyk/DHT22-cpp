@@ -12,6 +12,7 @@ Create folder components in main project directory. In this folder run:
 
 ```
 $ git clone https://github.com/gosouth/DHT22-cpp.git
+$ git clone https://github.com/lombo-cmyk/EspEthW5500Modbus.git
 ```
 
 **USE**
