@@ -206,11 +206,7 @@ int DHT::VerifyCrc(std::array<std::uint8_t, 5> verifyData) {
 }
 void DHT::UpdateModbusRegisters() const {
     auto& modbusManager = Modbus::getInstance();
-    vPortEnterCritical(&modbusMutex);
-    holdingRegParams_t regHolding = modbusManager.GetHoldingRegs();
     // todo: properly link indexHumidity(5) here from main project or port
     // todo: all updateModbus functions outside of actual sensor handlers
-    regHolding[5] = humidity_;
-    modbusManager.UpdateHoldingRegs(regHolding);
-    vPortExitCritical(&modbusMutex);
+    modbusManager.UpdateHoldingRegs(5, humidity_);
 }
