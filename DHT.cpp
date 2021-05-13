@@ -198,15 +198,14 @@ int DHT::VerifyCrc(std::array<std::uint8_t, 5> verifyData) {
     std::uint16_t data = verifyData[0] + verifyData[1] + verifyData[2] +
                          verifyData[3];
     if (verifyData[4] == (data & 0xFFu)) {
-        UpdateModbusRegisters();
         return DHT_OK;
     } else {
         return DHT_CHECKSUM_ERROR;
     }
 }
-void DHT::UpdateModbusRegisters() const {
+void DHT::UpdateModbusRegisters(std::uint8_t modbusIndex) const {
     auto& modbusManager = Modbus::getInstance();
-    // todo: properly link indexHumidity(5) here from main project or port
-    // todo: all updateModbus functions outside of actual sensor handlers
-    modbusManager.UpdateHoldingRegs(5, humidity_);
+    std::array<std::uint8_t, 1> index{modbusIndex};
+    std::array<float, 1> value{humidity_};
+    modbusManager.UpdateHoldingRegs(index, value);
 }

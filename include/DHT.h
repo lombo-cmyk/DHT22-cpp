@@ -19,15 +19,14 @@ public:
     auto GetTemperature() const -> const float& {
         return temperature_;
     };
+    void UpdateModbusRegisters(std::uint8_t modbusIndex) const;
 
 private:
     gpio_num_t DHTgpio_;
     float humidity_ = 0.;
     float temperature_ = 0.;
-
     int GetSignalLevel(int usTimeOut, bool state);
     int VerifyCrc(std::array<std::uint8_t, MAXdhtData> verifyData);
-    void UpdateModbusRegisters() const;
 };
 
 #endif
