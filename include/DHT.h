@@ -19,7 +19,8 @@ public:
     auto GetTemperature() const -> const float& {
         return temperature_;
     };
-    void UpdateModbusRegisters(std::uint8_t modbusIndex) const;
+    void UpdateModbusRegisters(std::uint8_t modbusIndex_h,
+                               std::uint8_t modbusIndex_t) const;
 
 private:
     gpio_num_t DHTgpio_;
