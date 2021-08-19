@@ -203,9 +203,11 @@ int DHT::VerifyCrc(std::array<std::uint8_t, 5> verifyData) {
         return DHT_CHECKSUM_ERROR;
     }
 }
-void DHT::UpdateModbusRegisters(std::uint8_t modbusIndex) const {
+void DHT::UpdateModbusRegisters(std::uint8_t modbusIndex_h,
+                                std::uint8_t modbusIndex_t) const {
     auto& modbusManager = Modbus::getInstance();
-    std::array<std::uint8_t, 1> index{modbusIndex};
-    std::array<float, 1> value{humidity_};
+    std::array<std::uint8_t, 2> index{modbusIndex_h,
+                                      modbusIndex_t};
+    std::array<float, 2> value{humidity_, temperature_};
     modbusManager.UpdateHoldingRegs(index, value);
 }
